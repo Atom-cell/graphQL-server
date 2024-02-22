@@ -13,63 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
 const cors_1 = __importDefault(require("cors"));
-const db_1 = require("./lib/db");
+const graphql_1 = __importDefault(require("./graphql"));
 const init = () => __awaiter(void 0, void 0, void 0, function* () {
     const app = (0, express_1.default)();
     const PORT = Number(process.env.PORT) || 4000;
-    const gqlServer = new server_1.ApolloServer({
-        typeDefs: `
-            type Book {
-                title: String
-            }
-
-            type User {
-                firstName: String
-                lastName: String
-                email: String
-                password: String
-                salt: String
-            }
-
-            type Query {
-                books: [Book]
-                sayName(name: String): String
-                user: [User]
-            }
-
-            type Mutation {
-                createUser(firstName: String!, lastName: String!, email: String!, password: String!):  Boolean
-            }
-        `,
-        resolvers: {
-            Query: {
-                books: () => [{ title: 'Hell oworld' }],
-                sayName: (_, { name }) => `Hello ${name}. How are you to-day?`,
-                user: (_, args) => __awaiter(void 0, void 0, void 0, function* () {
-                    return yield db_1.prismaClient.user.findMany();
-                })
-            },
-            Mutation: {
-                createUser: (_, { firstName, lastName, email, password, }) => __awaiter(void 0, void 0, void 0, function* () {
-                    yield db_1.prismaClient.user.create({
-                        data: {
-                            firstName,
-                            lastName,
-                            email,
-                            password,
-                            salt: "random_salt"
-                        }
-                    });
-                    return true;
-                }),
-            },
-        },
-    });
-    yield gqlServer.start();
-    app.use('/graphql', (0, cors_1.default)(), express_1.default.json(), (0, express4_1.expressMiddleware)(gqlServer));
+    app.use('/graphql', (0, cors_1.default)(), express_1.default.json(), (0, express4_1.expressMiddleware)(yield (0, graphql_1.default)()));
     app.get('/', (req, res) => {
         return res.json({ message: 'Server running on base route' });
     });
