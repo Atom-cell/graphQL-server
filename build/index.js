@@ -16,6 +16,7 @@ const express_1 = __importDefault(require("express"));
 const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
 const cors_1 = __importDefault(require("cors"));
+const db_1 = require("./lib/db");
 const init = () => __awaiter(void 0, void 0, void 0, function* () {
     const app = (0, express_1.default)();
     const PORT = Number(process.env.PORT) || 4000;
@@ -25,16 +26,46 @@ const init = () => __awaiter(void 0, void 0, void 0, function* () {
                 title: String
             }
 
+            type User {
+                firstName: String
+                lastName: String
+                email: String
+                password: String
+                salt: String
+            }
+
             type Query {
                 books: [Book]
                 sayName(name: String): String
+                user: [User]
+            }
+
+            type Mutation {
+                createUser(firstName: String!, lastName: String!, email: String!, password: String!):  Boolean
             }
         `,
         resolvers: {
             Query: {
-                books: () => [{ title: "Hell oworld" }],
-                sayName: (_, { name }) => `Hello ${name}.`
-            }
+                books: () => [{ title: 'Hell oworld' }],
+                sayName: (_, { name }) => `Hello ${name}. How are you to-day?`,
+                user: (_, args) => __awaiter(void 0, void 0, void 0, function* () {
+                    return yield db_1.prismaClient.user.findMany();
+                })
+            },
+            Mutation: {
+                createUser: (_, { firstName, lastName, email, password, }) => __awaiter(void 0, void 0, void 0, function* () {
+                    yield db_1.prismaClient.user.create({
+                        data: {
+                            firstName,
+                            lastName,
+                            email,
+                            password,
+                            salt: "random_salt"
+                        }
+                    });
+                    return true;
+                }),
+            },
         },
     });
     yield gqlServer.start();
